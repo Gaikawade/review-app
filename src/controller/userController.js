@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+// const nodemailer = require('nodemailer');
 const userModel = require('../models/userModel');
 const emailVerificationToken = require('../models/emailVerificationToken');
 const { isValidObjectId } = require('mongoose');
@@ -26,7 +26,7 @@ const create = async function (req, res) {
         })
         await newEmailVerificationToken.save();
         // send that otp to user
-        var transport = generateMailTransporter
+        var transport = generateMailTransporter();
 
         transport.sendMail({
             from: 'verification@reviewapp.com',
@@ -77,14 +77,7 @@ const verifyEmail = async (req, res) => {
 
     await emailVerificationToken.findByIdAndDelete(token._id);
 
-    var transport = nodemailer.createTransport({
-        host: "smtp.mailtrap.io",
-        port: 2525,
-        auth: {
-          user: "1dbe3c8178bd82",
-          pass: "c8b5b37b296b3d"
-        }
-      });
+    var transport = generateMailTransporter();
 
     transport.sendMail({
         from: 'verification@reviewapp.com',
@@ -142,6 +135,8 @@ const resendEmailVerificationToken = async (req, res) => {
         msg: "New OTP has been send to your email"
     });
 }
+
+
 
 module.exports = {
     create,
