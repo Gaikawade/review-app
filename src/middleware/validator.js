@@ -15,7 +15,7 @@ const userValidator = [
 const validate = (req, res, next) => {
     const err = validationResult(req).array();
     if (err.length) {
-        return res.status(400).json({ error: err[0].msg });
+        return res.status(400).json({ msg: err[0].msg });
     }
     next();
 };
