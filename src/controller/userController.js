@@ -2,6 +2,8 @@ const nodemailer = require('nodemailer');
 const userModel = require('../models/userModel');
 const emailVerificationToken = require('../models/emailVerificationToken');
 const { isValidObjectId } = require('mongoose');
+const { generateOTP, generateMailTransporter } = require('../utils/mail');
+const { sendError } = require('../utils/helper');
 
 const create = async function (req, res) {
     try {
@@ -9,20 +11,14 @@ const create = async function (req, res) {
 
         let emailExists = await userModel.findOne({ email });
         if (emailExists) {
-            return res
-                .status(401)
-                .json({ status: false, msg: "Email already registered" });
+            return sendError(res, 'Email already registered');
         }
 
         const newUser = new userModel({name, email, password});
         await newUser.save();
 
         //generate 6 digit OPT
-        let otp = '';
-        for(let i=0; i<=5; i++){
-            const randomVal = Math.round(Math.random() * 9)
-            otp = otp + randomVal;
-        }
+        let otp = generateOTP();
         //store otp in our db
         const newEmailVerificationToken = new emailVerificationToken({
             owner: newUser._id,
@@ -30,14 +26,7 @@ const create = async function (req, res) {
         })
         await newEmailVerificationToken.save();
         // send that otp to user
-        var transport = nodemailer.createTransport({
-          host: "smtp.mailtrap.io",
-          port: 2525,
-          auth: {
-            user: "1dbe3c8178bd82",
-            pass: "c8b5b37b296b3d"
-          }
-        });
+        var transport = generateMailTransporter
 
         transport.sendMail({
             from: 'verification@reviewapp.com',
@@ -62,15 +51,15 @@ const verifyEmail = async (req, res) => {
     const {userId, otp} = req.body;
 
     if(!isValidObjectId(userId))
-        return res.status(400).json({msg: 'Invalid user id'});
+        return sendError(res, 'Invalid user id');
     
     const user = await userModel.findById(userId);
     if(!user){
-        return res.status(404).json({msg: 'User not found'});
+        return sendError(res, 'User not found', 404);
     }
 
     if(user.isVerified){
-        return res.status(200).json({msg: 'User is already verified'});
+        return sendError(res, 'User is already verified');
     }
 
     const token = await emailVerificationToken.findOne({owner: userId});
@@ -80,7 +69,7 @@ const verifyEmail = async (req, res) => {
 
     const isMatched = await token.compareToken(otp);
     if(!isMatched){
-        return res.json({msg: 'Please submit a valid OTP'})
+        return sendError(res, 'Please submit a valid OTP');
     }
 
     user.isVerified = true;
@@ -109,7 +98,53 @@ const verifyEmail = async (req, res) => {
     res.json({msg: 'Your email is verified'});
 }
 
+const resendEmailVerificationToken = async (req, res) => {
+    const {userId} = req.body;
+
+    if(!isValidObjectId(userId))
+        return sendErr0r(res, 'Invalid user id');
+    
+    const user = await userModel.findById(userId);
+    if(!user){
+        return sendError(res, 'User not found', 404);
+    }
+    if(user.isVerified){
+        return res.json({ error: 'This email id is already verified'});
+    }
+
+    const alreadyHasToken = await emailVerificationToken.findOne({owner: userId});
+    if(alreadyHasToken){
+        return sendError(res, 'Only after one hour you can request for another token');
+    }
+
+    //generate 6 digit OPT
+    let otp = generateOTP();
+    //store otp in our db
+    const newEmailVerificationToken = new emailVerificationToken({
+        owner: user._id,
+        token: otp
+    })
+    await newEmailVerificationToken.save();
+    // send that otp to user
+    var transport = generateMailTransporter();
+
+    transport.sendMail({
+        from: 'verification@reviewapp.com',
+        to: user.email,
+        subject: 'Email Verification',
+        html: `
+            <p> Your verification OTP </p>
+            <h1> ${otp} </h1>
+        `
+    })
+
+    res.status(201).json({
+        msg: "New OTP has been send to your email"
+    });
+}
+
 module.exports = {
     create,
-    verifyEmail
+    verifyEmail,
+    resendEmailVerificationToken
 };
