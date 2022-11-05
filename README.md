@@ -21,7 +21,8 @@
 {
   name: { String, mandatory },
   email: { String, mandatory, Unique },
-  password: { String, mandatory }
+  password: { String, mandatory },
+  isVerified: { Boolean, mandatory, default: false}
 }
 ```
 
@@ -35,7 +36,7 @@
 }
 ```
 
-### Verify Email Model
+### Password Reset Model
 
 ```yaml
 {
@@ -48,9 +49,21 @@
 ## User APIs
 
 ### POST /create
+- Create a user document from request body.
+- Generate a OTP (with minimum of 6 digits) and send it to the user's email address, in order to verify the user's email.
+> ** NOTE:_** The verification email will be send through Mailtrap and by using the `nodemailer` package.
+- Password and OTP should be encrypted by using BYCRYPT, before saving into database.
 
 ### POST /verify-email
+- Allow an user to verify their email with the OTP (which is received through mail).
+- Once the email is verified, delete the user verify email document form the database and change the user's model `isVerified` key value  to true.
 
 ### POST /resend-verification-email
+- Allow the user to get another verification email (only if the user is not verified) by providing their `userId` in the request body.
+- Generate a OTP (with minimum of 6 digits) and send it to the user's email address, in order to verify the user's email.
 
 ### POST /forget-password
+- Allo the user to reset their password by providing email as the input in request body.
+- Genereate a token by using `CRYPTO` package and update token in password reset document.
+- Generate a reset password URL with token and userId in the params.
+- Send that URL to the user's email address.

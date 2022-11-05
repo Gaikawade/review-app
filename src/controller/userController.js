@@ -97,7 +97,7 @@ const resendEmailVerificationToken = async (req, res) => {
     try {
         const { userId } = req.body;
 
-        if (!isValidObjectId(userId)) return sendErr0r(res, "Invalid user id");
+        if (!isValidObjectId(userId)) return sendError(res, "Invalid user id");
 
         const user = await userModel.findById(userId);
         if (!user) {
