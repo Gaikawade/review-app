@@ -6,12 +6,12 @@ exports.sendError = (res, err, statusCode = 401) => {
 
 exports.generateRandomByte = () => {
   return new Promise((resolve, reject) => {
-    crypto.randomBytes(30, (err, buffer) => {
+    crypto.randomBytes(30, (err, buff) => {
       if(err) reject(err);
-      const bufferString = buffer.toString('hex');
+      const bufferString = buff.toString('hex');
 
       console.log(bufferString);
-      resolve(bufferString)
+      resolve(bufferString);
     })
   })
 }
