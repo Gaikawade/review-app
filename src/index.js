@@ -1,21 +1,18 @@
-const express = require('express');
-require('dotenv').comfig();
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const route = require('./router/route.js');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const userRoute = require("./router/userRoute.js");
 
 const app = express();
 app.use(express.json());
-app.use(bodyParser.urlencoded({extended: true}));
 
-mongoose.connect('mongodb+srv://Mahesh8985:lz9fOW52615YVat4@cluster0.l5fafvk.mongodb.net/ReviewApp',{
-  useNewUrlParser: true
-})
-.then( () => console.log('MongoDB is connected'))
-.catch( err => console.log(err));
+mongoose
+    .connect(process.env.MONGO_DB_URI)
+    .then(() => console.log("Hey man...I'm ready to store yout Data"))
+    .catch((err) => console.log(err));
 
-app.use('/user', userRoute);
+app.use("/user", userRoute);
 
 app.listen(process.nextTick.PORT || 3000, () => {
-  console.log('Express server listening on port ' + (process.env.PORT || 3000))
+  console.log(`I'm Express🚚 and I'm serving you on port ${process.env.PORT || 3000}`);
 });

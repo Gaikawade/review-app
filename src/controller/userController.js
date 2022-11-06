@@ -229,7 +229,7 @@ const signIn = async (req, res) => {
 
     const {_id, name} = user;
     const jwtToken = jwt.sign({userId: user._id},
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET_KEY,
         {expiresIn: '1d'});
 
     res.json({user: {id: _id, name, email, token: jwtToken} });
